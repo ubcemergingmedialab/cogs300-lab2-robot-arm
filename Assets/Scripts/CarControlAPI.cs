@@ -52,9 +52,9 @@ public class CarControlAPI : MonoBehaviour
         if (execute)
         {
             //TODO: Write your movement instructions as a list of doubles (number with up to two decimal points) -> ex: {0, -0.5, 1, 0.5}
-            double[] instructions = { };
+            double[] instructions = { 0, 0, -0.5, 0, 0, 1, 0.5, 0, 0, 0, -1, -0.3, 0, 0.5, 0, 0, 0, -0.25, 0, 1, 0.7, 0.5, 0, 0.5, 0 };
 
-            //Yunction which will run those instructions one at a time and switch every 0.5 seconds
+            //Function which will run those instructions one at a time and switch every 0.5 seconds
             ExectuteInstructions(instructions, 0.5);
             //Only start this function once;
             execute = false;

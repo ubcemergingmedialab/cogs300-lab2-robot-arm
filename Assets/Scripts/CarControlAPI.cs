@@ -125,9 +125,9 @@ public class CarControlAPI : MonoBehaviour
             }
         }
 
-        if (frontDist > 10)
+        if (frontDist > 9)
         {
-            controlScript.SetThrottle(0.5f);
+            controlScript.SetThrottle(0.7f);
         }
         else
         {

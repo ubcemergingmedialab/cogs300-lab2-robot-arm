@@ -62,9 +62,9 @@ public class CarControlAPI : MonoBehaviour
 
         void ExectuteInstructions(double[] instructions, double delay)
         {
-            StartCoroutine(ExecuteInstructionsCoroutine(instructions, delay));
+            StartCoroutine(ExecuteInstructionsCoroutine());
 
-            IEnumerator ExecuteInstructionsCoroutine(double[] instructions, double delay)
+            IEnumerator ExecuteInstructionsCoroutine()
             {
                 int instructionIndex = 0;
                 while (instructionIndex < instructions.Length)
@@ -90,20 +90,55 @@ public class CarControlAPI : MonoBehaviour
 
     void SensorLogicMovement()
     {
-        controlScript.SetThrottle(1);
+        
 
 
         //See Raycast function below for description on wha
-        float rightDist = Raycast(45);
-        float leftDist = Raycast(-45);
+        float rightDist = Raycast(30);
+        float leftDist = Raycast(-30);
+        float rightBackDist = Raycast(60);
+        float leftBackDist = Raycast(-60);
+        float frontDist = Raycast(0);
+
+       
 
         if (rightDist > leftDist)
         {
-            controlScript.SetTurn(1);
+            if(rightBackDist > 3) {
+                controlScript.SetTurn(1);
+            }
+            else
+            {
+                controlScript.SetTurn(0);
+            }
+            
         }
         else if (rightDist < leftDist)
         {
+            if (leftBackDist > 3)
+            {
+                controlScript.SetTurn(-1);
+            }
+            else
+            {
+                controlScript.SetTurn(0);
+            }
+        }
+
+        if (frontDist > 10)
+        {
+            controlScript.SetThrottle(0.5f);
+        }
+        else
+        {
+            controlScript.SetThrottle(-1);
             controlScript.SetTurn(-1);
+        }
+
+        if(rightDist > 900 && frontDist > 900 && leftDist > 900)
+        {
+            controlScript.SetThrottle(1);
+            controlScript.SetTurn(0);
         }
     }
     #endregion

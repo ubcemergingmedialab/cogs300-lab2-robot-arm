@@ -2395,7 +2395,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planned: 0
-  sensorLogic: 1
+  sensorLogic: 0
+  perceptron: 1
+  sensorDistances: []
+  sum: 0
 --- !u!4 &2011194824 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 261786959625234688, guid: 79d0ca8b77e301442afdb49f102e8aed,

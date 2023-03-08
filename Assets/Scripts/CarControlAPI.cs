@@ -14,8 +14,12 @@ public class CarControlAPI : MonoBehaviour
     private float leftPower;
     private float throttlePower;
 
-    public bool planned, sensorLogic;
+    public bool planned, sensorLogic, perceptron;
     private bool execute = true;
+
+    public float[] sensorDistances;
+    public float sum;
+
 
 
     #endregion
@@ -37,6 +41,27 @@ public class CarControlAPI : MonoBehaviour
         {
             SensorLogicMovement();
         }
+        else if (perceptron)
+        {
+            Debug.Log("perceptron");
+            float[] sensorAngles = {-90, -45, -20, 0, 20, 45, 90 };
+            float[] weights = { -1.5f, -1, -1, 0f, 1, 1, 1.5f };
+
+            sensorDistances = GetSensorDistances(sensorAngles);
+            PerceptronMovement(sensorDistances, weights);
+        }
+    }
+
+    float[] GetSensorDistances(float[] sensorAngles)
+    {
+        float[] distances = new float[sensorAngles.Length];
+
+        for(int i = 0; i < sensorAngles.Length; i++)
+        {
+            distances[i] = (Raycast(sensorAngles[i]) + 0.01f);
+        }
+        
+        return distances;
     }
 
     #endregion
@@ -84,6 +109,8 @@ public class CarControlAPI : MonoBehaviour
     }
     //Takes in an array of instructions and exectutes them one at a time as movement commands (-1 is full left, 1 is full right, 0 is straight), waiting for delay seconds before moving to the next instruction
 
+
+    
 
 
     // ------------------ SENSOR LOGIC ---------------
@@ -169,4 +196,28 @@ public class CarControlAPI : MonoBehaviour
     }
 
     #endregion
+
+    void PerceptronMovement(float[] sensorDistances, float[] weights)
+    {
+        controlScript.SetThrottle(1);
+
+        sum = 0;
+
+        for(int i = 0; i < sensorDistances.Length; i++)
+        {
+            sum += sensorDistances[i] * weights[i];
+
+        }
+
+    
+        if(sum > 0)
+        {
+            controlScript.SetTurn(1);
+        }
+        else
+        {
+            controlScript.SetTurn(-1);
+        }
+
+    }
 }

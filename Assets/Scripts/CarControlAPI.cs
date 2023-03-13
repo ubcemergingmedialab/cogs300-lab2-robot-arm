@@ -10,15 +10,25 @@ public class CarControlAPI : MonoBehaviour
     #region Variables
     PrometeoCarController controlScript;
 
+    public TrainingData[] trainingDataList = { };
+
     private float rightPower;
     private float leftPower;
     private float throttlePower;
 
-    public bool planned, sensorLogic, perceptron;
+    public bool planned, sensorLogic, perceptron, perceptronPre, perceptronTrained;
     private bool execute = true;
 
     public float[] sensorDistances;
+
+
     public float sum;
+    public float[] preSetWeights = { 1.5f, 1, 1, 1, 0.1f, -1, -1, -1, -1.5f };
+    public float[] trainedWeights = { 0,0,0,0,0,0,0,0,0 };
+
+    public int maxIterations = 10;
+
+    
 
 
 
@@ -28,6 +38,14 @@ public class CarControlAPI : MonoBehaviour
     void Awake()
     {
         controlScript = GetComponent<PrometeoCarController>();
+    }
+
+    private void Start()
+    {
+        if (perceptronTrained)
+        {
+            TrainPerceptron();
+        }
     }
 
     // Update is called once per frame
@@ -43,12 +61,26 @@ public class CarControlAPI : MonoBehaviour
         }
         else if (perceptron)
         {
-            Debug.Log("perceptron");
-            float[] sensorAngles = {-90, -45, -20, 0, 20, 45, 90 };
-            float[] weights = { -1.5f, -1, -1, 0f, 1, 1, 1.5f };
-
+            float[] sensorAngles = {-70,-45, -20, -5, 0, 5, 20,45, 70 };
             sensorDistances = GetSensorDistances(sensorAngles);
-            PerceptronMovement(sensorDistances, weights);
+            if (perceptronPre)
+            {
+                PerceptronMovement(sensorDistances, preSetWeights);
+            }
+            else if (perceptronTrained)
+            {
+                PerceptronMovement(sensorDistances, trainedWeights);
+                string result = "Sensor Distances: ";
+                foreach (var item in sensorDistances)
+                {
+                    result += item.ToString() + "f, ";
+                }
+                Debug.Log(result);
+            }
+
+
+            
+            
         }
     }
 
@@ -58,10 +90,61 @@ public class CarControlAPI : MonoBehaviour
 
         for(int i = 0; i < sensorAngles.Length; i++)
         {
-            distances[i] = (Raycast(sensorAngles[i]) + 0.01f);
+            distances[i] = (float)System.Math.Round(1 / Raycast(sensorAngles[i]), 2);
         }
         
         return distances;
+    }
+
+    void TrainPerceptron()
+    {
+         trainingDataList = new TrainingData[]{
+            new TrainingData(new float[]{0.09f, 0.06f, 0.03f, 0.07f, 0.07f, 0.07f, 0.06f, 0.09f, 0.11f}, -1),
+            new TrainingData(new float[]{0.12f, 0.11f, 0.08f, 0.06f, 0.05f, 0.04f, 0.03f, 0.07f, 0.07f}, 1),
+            new TrainingData(new float[]{0.07f, 0.03f, 0.07f, 0.07f, 0.07f, 0.06f, 0.08f, 0.11f, 0.12f}, -1),
+            new TrainingData(new float[]{0.12f, 0.11f, 0.08f, 0.05f, 0.04f, 0.03f, 0.03f, 0.07f, 0.07f}, 1),
+            new TrainingData(new float[]{0.03f, 0.08f, 0.07f, 0.1f, 0.11f, 0.12f, 0.14f, 0.14f, 0.12f}, -1),
+
+        };                                     
+                                               
+        
+        float learningRate = 0.1f;
+        for (int i = 0; i < maxIterations; i++)
+        {
+            int totalError = 0;
+            for (int j = 0; j < trainingDataList.Length; j++)
+            {
+                int output = caluculatePerceptronOutput(trainingDataList[j].Inputs, trainedWeights);
+                int error = trainingDataList[j].Output - output;
+
+                totalError += Mathf.Abs(error);
+                Debug.Log("totalError: " + totalError);
+                if (error != 0)
+                {
+                    for (int k = 0; k < trainedWeights.Length; k++)
+                    {
+                        float result = learningRate * error * trainingDataList[j].Inputs[k];
+                        trainedWeights[k] += result;
+                        Debug.Log("weightNum: " + k + ", output:" + output + ", expected output:" + trainingDataList[j].Output + ", error: " + error + ", result: " + result + ", finalWeight: " + trainedWeights[k]);
+                    }
+
+                }
+                
+            }
+
+        }
+    }
+
+    public class TrainingData
+    {
+        public float[] Inputs;
+        public int Output;
+
+        public TrainingData(float[] inputs, int output)
+        {
+            Inputs = inputs;
+            Output = output;
+        }
     }
 
     #endregion
@@ -197,27 +280,29 @@ public class CarControlAPI : MonoBehaviour
 
     #endregion
 
+    int caluculatePerceptronOutput(float[] inputs, float[] weights) {
+        sum = 0;
+        
+        for (int i = 0; i < inputs.Length; i++)
+        {
+            sum += inputs[i] * weights[i];
+        }
+
+        if (sum > 0)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
     void PerceptronMovement(float[] sensorDistances, float[] weights)
     {
         controlScript.SetThrottle(1);
 
-        sum = 0;
-
-        for(int i = 0; i < sensorDistances.Length; i++)
-        {
-            sum += sensorDistances[i] * weights[i];
-
-        }
-
-    
-        if(sum > 0)
-        {
-            controlScript.SetTurn(1);
-        }
-        else
-        {
-            controlScript.SetTurn(-1);
-        }
+        controlScript.SetTurn(caluculatePerceptronOutput(sensorDistances, weights));
 
     }
 }
